@@ -52,7 +52,7 @@ python -m airbluez.main
 ### Controls
 - **Left Hand**:
     - **Position**: Move around the center of the screen to select the **Chord Root** (C, D, E, etc.).
-    - **Gesture**: Hand shape determines the **Chord Quality** (e.g., Open hand for Major, Closed for Minor).
+    - **Gesture**: Hand shape determines the **Chord Quality**, see [docs/GESTURES.md](GESTURES.md) for the specifics.
 - **Right Hand**:
     - **Horizontal Swipe**: Cycle through available **Instruments**.
     - **Vertical Slide**: Adjust **Volume**.
