@@ -43,10 +43,34 @@ class DebugOverlay:
             points.append((px, py))
 
         # Draw lines
-        color = (0, 255, 0) if hand_frame.handedness == "Left" else (0, 255, 255)
+        color = (39, 132, 245) if hand_frame.handedness == "Left" else (245, 149, 29)
         for start_idx, end_idx in connections:
-            pygame.draw.line(surface, color, points[start_idx], points[end_idx], 2)
+            pygame.draw.line(surface, color, points[start_idx], points[end_idx], 3)
 
         # Draw joints
         for px, py in points:
-            pygame.draw.circle(surface, (255, 0, 0), (px, py), 4)
+            pygame.draw.circle(surface, (142, 39, 245), (px, py), 5)
+
+    def draw_anchor_tether(
+        self,
+        surface: pygame.Surface,
+        hand_frame: HandFrame,
+        wheel_center: tuple[int, int],
+        width: int,
+        height: int,
+    ):
+        """Draws a tether from the hand's tracking point to the wheel center."""
+        if not hand_frame or not hand_frame.landmarks_xy:
+            return
+
+        # Landmark 9 is the Middle Finger MCP (center of palm)
+        hx, hy = hand_frame.landmarks_xy[9]
+        px, py = int(hx * width), int(hy * height)
+
+        # 1. Draw the line to the center (Thin and semi-transparent)
+        tether_color = (0, 255, 0, 150)
+        pygame.draw.line(surface, tether_color, (px, py), wheel_center, 1)
+
+        # 2. Draw a highlight circle at the hand center
+        pygame.draw.circle(surface, (255, 255, 255), (px, py), 6, 2)  # Outer ring
+        pygame.draw.circle(surface, (0, 255, 0), (px, py), 3)  # Inner dot

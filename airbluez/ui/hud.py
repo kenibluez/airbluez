@@ -11,7 +11,7 @@ class HUD:
         self.font = pygame.font.SysFont("Arial", 24)
 
         # Instrument names matching our sample bank
-        self.instruments = ["Pad", "Rhodes", "Piano", "Guitar"]
+        self.instruments = ["Square", "Synth", "Pad", "Saw"]
 
     def draw(self, surface: pygame.Surface, state: AppState):
         overlay = pygame.Surface((self.width, self.height), pygame.SRCALPHA)

@@ -1,11 +1,11 @@
-from pyo import LFO, Blit, Sine, SuperSaw
+from pyo import Blit, LFO, Sine, SuperSaw
 
 
 class SampleBank:
     """Manages synthesizer presets and timbres."""
 
     def __init__(self):
-        self.presets = ["pad", "rhodes", "piano", "guitar"]
+        self.presets = ["squarewave", "synthwave", "pad", "sawtooth"]
         self.current_idx = 0
 
     def get_current_preset(self) -> str:
@@ -19,20 +19,20 @@ class SampleBank:
         """Returns a Pyo synth object based on the current preset."""
         preset = self.get_current_preset()
 
-        # Pad: Smooth sine waves
-        if preset == "pad":
+        # Squarewave: LFO type 2 is square
+        if preset == "squarewave":
+            return LFO(freq=freqs, type=2, mul=mul)
+
+        # Synthwave: Thick SuperSaw
+        elif preset == "synthwave":
+            return SuperSaw(freq=freqs, detune=0.6, bal=0.5, mul=mul)
+
+        # Pad: Smooth Sine with some harmonics if needed, but Sine is classic pad base
+        elif preset == "pad":
             return Sine(freq=freqs, mul=mul)
 
-        # Rhodes: Triangle-like LFO
-        elif preset == "rhodes":
-            return LFO(freq=freqs, type=3, mul=mul)
-
-        # Piano/Keys: Slightly richer harmonics
-        elif preset == "piano":
-            return Blit(freq=freqs, harms=5, mul=mul)
-
-        # Guitar: Sawtooth for a plucked/strummed edge
-        elif preset == "guitar":
-            return SuperSaw(freq=freqs, detune=0.5, mul=mul)
+        # Sawtooth: Blit with many harmonics
+        elif preset == "sawtooth":
+            return Blit(freq=freqs, harms=20, mul=mul)
 
         return Sine(freq=freqs, mul=mul)

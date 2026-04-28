@@ -1,48 +1,47 @@
-from typing import Optional
-
-import numpy as np
+import math
 
 
 class WheelMapper:
     def __init__(self, hysteresis_deg: float = 5.0):
-        # Camelot Wheel ordering as per GESTURES.md
-        self.roots = ["C", "G", "D", "A", "E", "B", "Gb", "Db", "Ab", "Eb", "Bb", "F"]
+        self.hysteresis = hysteresis_deg
+
+        # New Custom Order: C to B (Naturals), then the Accidentals
+        self.roots = ["C", "D", "E", "F", "G", "A", "B", "Db", "Eb", "Gb", "Ab", "Bb"]
         self.num_segments = len(self.roots)
         self.segment_size = 360.0 / self.num_segments
-        self.hysteresis = hysteresis_deg
-        self.current_root_idx: Optional[int] = None
+        self.current_root_idx = 0
 
-    def get_root_from_angle(
-        self, wrist_xy: tuple[float, float], index_mcp_xy: tuple[float, float]
+    def get_root_from_position(
+        self, hand_point: tuple[float, float], anchor: tuple[float, float] = (0.3, 0.5)
     ) -> str:
-        """
-        Calculates angle from wrist to index finger MCP and maps to chord root.
-        Angles are normalized 0-360 degrees.
-        """
-        # Calculate vector from wrist to index MCP
-        dx = index_mcp_xy[0] - wrist_xy[0]
-        dy = index_mcp_xy[1] - wrist_xy[1]
+        hx, hy = hand_point
+        ax, ay = anchor
 
-        # Calculate angle in degrees (pointing up = 0 or 360)
-        angle = np.degrees(np.arctan2(dx, -dy)) % 360
+        dx = hx - ax
+        dy = hy - ay
 
-        # Initial assignment
-        if self.current_root_idx is None:
-            self.current_root_idx = (
-                int((angle + (self.segment_size / 2)) / self.segment_size) % self.num_segments
-            )
-            return self.roots[self.current_root_idx]
+        angle_rad = math.atan2(dy, dx)
+        angle_deg = math.degrees(angle_rad)
 
-        # Hysteresis logic: only switch if we've moved significantly into a new segment
-        target_idx = int((angle + (self.segment_size / 2)) / self.segment_size) % self.num_segments
+        # Shift the angle so 180 degrees (Left) acts as our 0 index for the array
+        angle_shifted = (angle_deg - 180) % 360
 
-        if target_idx != self.current_root_idx:
-            # Calculate how far we are from the boundary of the current segment
-            current_center = self.current_root_idx * self.segment_size
-            diff = abs((angle - current_center + 180) % 360 - 180)
+        raw_idx = (
+            int((angle_shifted + (self.segment_size / 2)) // self.segment_size) % self.num_segments
+        )
 
-            # Change only if outside the hysteresis buffer
-            if diff > (self.segment_size / 2 + self.hysteresis):
-                self.current_root_idx = target_idx
+        # Hysteresis
+        segment_center = raw_idx * self.segment_size
+        diff = angle_shifted - segment_center
+
+        if diff > 180:
+            diff -= 360
+        if diff < -180:
+            diff += 360
+
+        boundary_dist = (self.segment_size / 2) - abs(diff)
+
+        if boundary_dist > self.hysteresis or self.current_root_idx == raw_idx:
+            self.current_root_idx = raw_idx
 
         return self.roots[self.current_root_idx]

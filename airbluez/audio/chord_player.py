@@ -23,29 +23,38 @@ class ChordPlayer:
         ]
 
         self.current_chord = (None, None)
+        self.last_sample_idx = self.bank.current_idx
         self.is_playing = False
 
     def play(self, root: str, quality: str, volume: float = 0.5):
-        """Crossfades to a new chord."""
+        """Crossfades to a new chord or updates voice if sample changes."""
         if not root or not quality:
             self.stop()
             return
 
         self.is_playing = True
 
-        if (root, quality) == self.current_chord:
-            # If chord is the same, just ensure it's fading in/playing
+        current_sample_idx = self.bank.current_idx
+        chord_changed = (root, quality) != self.current_chord
+        sample_changed = current_sample_idx != self.last_sample_idx
+
+        if not chord_changed and not sample_changed:
+            # If chord and sample are the same, ensure it's playing and update volume safely
             self.faders[self.active_voice].play()
+            self.faders[self.active_voice].setMul(volume)
             return
 
         # Prepare the next voice
         next_voice = 1 - self.active_voice
         new_freqs = get_chord_frequencies(root, quality)
 
-        # Update synth frequencies (and rebuild if preset changed)
+        # Update the volume on the next fader
+        self.faders[next_voice].setMul(volume)
+
+        # Rebuild the synth voice
         self.synths[next_voice].stop()
         self.synths[next_voice] = self.bank.build_synth_voice(
-            new_freqs, mul=self.faders[next_voice] * volume
+            new_freqs, mul=self.faders[next_voice]
         )
         self.synths[next_voice].out()
 
@@ -55,6 +64,7 @@ class ChordPlayer:
 
         self.active_voice = next_voice
         self.current_chord = (root, quality)
+        self.last_sample_idx = current_sample_idx
 
     def stop(self):
         """Fades out the current chord."""

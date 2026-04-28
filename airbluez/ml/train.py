@@ -37,7 +37,7 @@ def train_gesture_model(hand: str):
         random_state=42,
     )
 
-    clf.fit(X_train, y_train)
+    clf.fit(X_train.values, y_train)
 
     # Evaluation
     y_pred = clf.predict(X_test)
