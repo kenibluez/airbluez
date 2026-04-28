@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import queue
 import time
+from typing import Any
 
 import cv2
 import mediapipe as mp
@@ -9,10 +12,11 @@ from airbluez.perception.camera import Camera
 from airbluez.perception.landmarker import build_landmarker
 
 # Thread-safe queue to pass results from MediaPipe's async callback to the main thread
-result_queue = queue.Queue(maxsize=2)
+# We use Any for HandLandmarkerResult due to missing stubs
+result_queue: queue.Queue[tuple[Any, np.ndarray, int]] = queue.Queue(maxsize=2)
 
 
-def _on_result(result, output_image: mp.Image, timestamp_ms: int):
+def _on_result(result: Any, output_image: mp.Image, timestamp_ms: int) -> None:
     try:
         # Push raw results to the queue for rendering
         result_queue.put_nowait((result, output_image.numpy_view(), timestamp_ms))
@@ -46,7 +50,7 @@ HAND_CONNECTIONS = [
 ]
 
 
-def draw_landmarks(frame, hand_landmarks):
+def draw_landmarks(frame: np.ndarray, hand_landmarks: Any) -> list[tuple[int, int]]:
     """Draws a pure OpenCV skeleton over the landmarks."""
     h, w, _ = frame.shape
 
@@ -60,16 +64,16 @@ def draw_landmarks(frame, hand_landmarks):
     for connection in HAND_CONNECTIONS:
         pt1 = points[connection[0]]
         pt2 = points[connection[1]]
-        cv2.line(frame, pt1, pt2, (255, 255, 255), 2)
+        _ = cv2.line(frame, pt1, pt2, (255, 255, 255), 2)
 
     # Draw joints (circles)
     for pt in points:
-        cv2.circle(frame, pt, 5, (0, 0, 255), -1)
+        _ = cv2.circle(frame, pt, 5, (0, 0, 255), -1)
 
     return points
 
 
-def main():
+def main() -> None:
     cam = Camera(0)
     model_path = "assets/models/hand_landmarker.task"
     landmarker = build_landmarker(model_path, _on_result)
@@ -96,14 +100,17 @@ def main():
                 annotated_frame = cv2.cvtColor(result_frame, cv2.COLOR_RGB2BGR)
 
                 # Draw landmarks if hands are detected
-                if result.hand_landmarks:
+                if hasattr(result, "hand_landmarks") and result.hand_landmarks:
                     for idx, hand_landmarks in enumerate(result.hand_landmarks):
                         # Draw custom skeleton and retrieve pixel points
                         points = draw_landmarks(annotated_frame, hand_landmarks)
 
                         # Render the handedness label at the wrist (landmark 0)
-                        # Render the handedness label at the wrist (landmark 0)
-                        if result.handedness and idx < len(result.handedness):
+                        if (
+                            hasattr(result, "handedness")
+                            and result.handedness
+                            and idx < len(result.handedness)
+                        ):
                             # The Tasks API returns a Category object for handedness
                             raw_label = result.handedness[idx][0].category_name
 
@@ -112,7 +119,7 @@ def main():
 
                             wrist_coords = points[0]
 
-                            cv2.putText(
+                            _ = cv2.putText(
                                 annotated_frame,
                                 corrected_label,
                                 (wrist_coords[0] - 20, wrist_coords[1] + 30),
