@@ -219,3 +219,6 @@ __marimo__/
 
 # Datasets
 data/gestures/*csv
+
+# Machine Learning Models
+airbluez/ml/models/*.joblib
