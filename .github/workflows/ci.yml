@@ -12,8 +12,10 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install dependencies
-        run: pip install .[dev] pre-commit pytest
-      - name: Run pre-commit
-        run: pre-commit run --all-files
+        run: pip install .[dev] ruff mypy pytest
+      - name: Run Linting (Ruff)
+        run: ruff check .
+      - name: Run Type Checking (Mypy)
+        run: mypy .
       - name: Run tests
         run: pytest
