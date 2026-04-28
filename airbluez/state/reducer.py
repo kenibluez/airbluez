@@ -10,3 +10,16 @@ def apply_right_hand(
 
     # Pydantic's model_copy(update=...) is the equivalent of dataclass replace
     return state.model_copy(update={"sample_id": new_sample_id, "volume": new_volume})
+
+
+# (Keep your existing apply_right_hand function here)
+
+
+def apply_left_hand(state: AppState, root: str, quality: str) -> AppState:
+    """Pure function returning a new AppState based on left hand chord changes."""
+    return state.model_copy(update={"chord_root": root, "chord_quality": quality})
+
+
+def apply_play_pause(state: AppState, play: bool) -> AppState:
+    """Pure function to toggle the play state."""
+    return state.model_copy(update={"play": play})
