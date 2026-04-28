@@ -1,4 +1,4 @@
-from pidantic import BaseModel
+from pydantic import BaseModel
 
 
 class AppState(BaseModel):
